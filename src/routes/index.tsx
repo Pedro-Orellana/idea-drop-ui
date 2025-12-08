@@ -3,8 +3,10 @@ import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { Lightbulb } from "lucide-react";
 import { fetchAllIdeas } from "@/api/ideas";
 
-//create a query option
+//componets
+import IdeaCard from "@/components/idea-card";
 
+//create a query option
 const allIdeasQueryOptions = () =>
   queryOptions({
     queryKey: ["ideas"],
@@ -24,7 +26,12 @@ function App() {
   const { data: ideas } = useSuspenseQuery(allIdeasQueryOptions());
 
   //get only the first 3 ideas
-  const homeIdeas = ideas.slice(0, 3);
+  const homeIdeas = ideas
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+    .slice(0, 3);
 
   return (
     <div className="flex flex-col md:flex-row items-start justify-between gap-10 p-6 text-blue-600">
@@ -42,25 +49,11 @@ function App() {
         <h2 className="text-2xl font-semibold mb-4 text-gray-800">
           Latest Ideas
         </h2>
-        <ul className="space-y-6">
+        <div className="space-y-6">
           {homeIdeas.map((idea) => (
-            <li
-              key={idea.id}
-              className="border border-gray-300 rounded-lg shadow p-4 bg-white"
-            >
-              <h3 className="text-lg font-bold text-gray-900">{idea.title}</h3>
-              <p className="text-gray-600 mb-2">{idea.summary}</p>
-              <Link
-                to="/ideas/$ideaId"
-                params={{ ideaId: idea.id }}
-                className="text-blue-600 hover:underline"
-              >
-                {" "}
-                Read more →{" "}
-              </Link>
-            </li>
+            <IdeaCard key={idea.id} idea={idea} showLink={true} />
           ))}
-        </ul>
+        </div>
 
         <div className="mt-6">
           <Link

@@ -2,6 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { fetchAllIdeas } from "@/api/ideas";
 
+//components
+import IdeaCard from "@/components/idea-card";
+
 //queryOptions
 const allIdeasQueryOptions = () =>
   queryOptions({
@@ -17,33 +20,18 @@ export const Route = createFileRoute("/ideas/")({
 });
 
 function IdeasPage() {
-  const { data: ideas } = useSuspenseQuery(allIdeasQueryOptions());
+  const { data } = useSuspenseQuery(allIdeasQueryOptions());
+  const ideas = data.sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Ideas</h1>
-      <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         {ideas.map((idea) => (
-          <li
-            key={idea.id}
-            className="border border-gray-300 p-4 rounded shadow 
-                      bg-white flex flex-col justify-between"
-          >
-            <div>
-              <h2 className="text-lg font-semibold">{idea.title}</h2>
-              <p className="text-gray-700 mt-2">{idea.summary}</p>
-            </div>
-
-            <Link
-              to="/ideas/$ideaId"
-              params={{ ideaId: idea.id }}
-              className="text-center mt-4 inline-block bg-blue-600 text-white
-            px-4 py-2 rounded hover:bg-blue-700 transition"
-            >
-              Show idea
-            </Link>
-          </li>
+          <IdeaCard key={idea.id} idea={idea} />
         ))}
-      </ul>
+      </div>
     </div>
   );
 }

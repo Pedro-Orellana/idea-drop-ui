@@ -1,57 +1,71 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMutation } from "@tanstack/react-query";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import {
+  queryOptions,
+  useSuspenseQuery,
+  useMutation,
+} from "@tanstack/react-query";
 import { useState } from "react";
+import { fetchSingleIdea, updateIdea } from "@/api/ideas";
 
-//api mutation function
-import { createNewIdea } from "@/api/ideas";
-
-export const Route = createFileRoute("/ideas/new/")({
-  component: RouteComponent,
-});
-
-function RouteComponent() {
-  const navigate = useNavigate();
-
-  //mutation object
-  const { mutateAsync, isPending } = useMutation({
-    mutationFn: createNewIdea,
-    onSuccess: () => {
-      navigate({ to: "/ideas" });
-    },
+//query to get the idea information
+const singleIdeaQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey: ["idea", id],
+    queryFn: async () => fetchSingleIdea(id),
   });
 
-  const [title, setTitle] = useState("");
-  const [summary, setSummary] = useState("");
-  const [description, setDescription] = useState("");
-  const [tags, setTags] = useState("");
+export const Route = createFileRoute("/ideas/$ideaId/edit")({
+  component: IdeaEditPage,
+  loader: async ({ params, context: { queryClient } }) => {
+    return queryClient.ensureQueryData(singleIdeaQueryOptions(params.ideaId));
+  },
+});
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+function IdeaEditPage() {
+  const { ideaId } = Route.useParams();
+  const { data: idea } = useSuspenseQuery(singleIdeaQueryOptions(ideaId));
 
-    //do some data validation first
-    if (!title.trim() || !summary.trim() || !description.trim()) {
-      //do not submit the form
-      return;
-    }
+  const navigate = useNavigate();
 
-    try {
-      await mutateAsync({
+  const [title, setTitle] = useState(idea.title);
+  const [summary, setSummary] = useState(idea.summary);
+  const [description, setDescription] = useState(idea.description);
+  const [tags, setTags] = useState(idea.tags.join(", "));
+
+  //mutation to edit the idea
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: async () =>
+      updateIdea(ideaId, {
         title,
         summary,
         description,
         tags: tags
           .trim()
-          .split(",")
+          .split(", ")
           .map((t) => t.trim()),
-      });
-    } catch (err) {
-      console.log(err);
-    }
+      }),
+    onSuccess: () => {
+      navigate({ to: "/ideas/$ideaId", params: { ideaId } });
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await mutateAsync();
   };
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold mb-6">Create new Idea</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold mb-6">Edit your idea</h1>
+        <Link
+          to="/ideas/$ideaId"
+          params={{ ideaId }}
+          className="text-blue-500 underline"
+        >
+          Back to idea
+        </Link>
+      </div>
 
       <form className="space-y-2" onSubmit={handleSubmit}>
         <div>
@@ -118,7 +132,7 @@ function RouteComponent() {
           disabled={isPending}
           className="bg-blue-600 text-white w-full py-2 rounded-lg mt-8"
         >
-          Create Idea
+          Save changes
         </button>
       </form>
     </div>
