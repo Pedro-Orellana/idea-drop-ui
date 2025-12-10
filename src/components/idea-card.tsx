@@ -24,7 +24,7 @@ const IdeaCard = ({ idea, showLink = false }: IdeaCardProps) => {
 
       <Link
         to="/ideas/$ideaId"
-        params={{ ideaId: idea.id }}
+        params={{ ideaId: idea._id }}
         className={linkClasses}
       >
         {showLink ? "show more" : "view idea"}
