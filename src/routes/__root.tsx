@@ -9,7 +9,7 @@ import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 
 //components
-import Header from "@/components/header";
+import Header from "@/components/Header";
 
 type RouterContext = {
   queryClient: QueryClient;
